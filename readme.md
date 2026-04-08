@@ -10,6 +10,7 @@ Esta aplicacion es una herramienta hermana de `cPRArgentina` para comparacion me
 
 - FastAPI + frontend HTML integrado
 - Calculo HLA-only (sin ajuste ni filtrado ABO)
+- Modos disponibles: `freq` y `filter` (sin logica ABO)
 - Validacion de antigenos contra `data/hla_validation.csv`
 - Base SQLite real o demo
 - Endpoints de salud, metadata y referencia
@@ -17,7 +18,6 @@ Esta aplicacion es una herramienta hermana de `cPRArgentina` para comparacion me
 ## Diferencias clave con cPRArgentina
 
 - No hay campo ABO en el input
-- No hay modos `freq` / `filter`
 - No hay salida asociada a ajuste ABO
 - Resultado unico: porcentaje PRA por incompatibilidad HLA
 

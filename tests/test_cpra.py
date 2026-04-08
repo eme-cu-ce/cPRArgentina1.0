@@ -26,6 +26,7 @@ def test_pra_valido():
     response = calc_cpra(InputData(antigenos=["A2"]))
 
     assert "pra" in response
+    assert response["mode_used"] == "FREQ"
     assert isinstance(response["pra"], float)
 
 
@@ -44,8 +45,8 @@ def test_pra_entre_0_y_100():
 
 
 def test_agregar_antigeno_no_disminuye_pra():
-    r1 = calc_cpra(InputData(antigenos=["A2"]))
-    r2 = calc_cpra(InputData(antigenos=["A2", "B44"]))
+    r1 = calc_cpra(InputData(antigenos=["A2"], mode="freq"))
+    r2 = calc_cpra(InputData(antigenos=["A2", "B44"], mode="filter"))
 
     assert r2["pra"] >= r1["pra"]
 
@@ -55,6 +56,19 @@ def test_calc_cpra_rechaza_payload_vacio():
         response = client.post("/calc_cpra", json={"antigenos": []})
 
     assert response.status_code == 400
+
+
+def test_mode_invalido_rechazado():
+    with TestClient(app) as client:
+        response = client.post(
+            "/calc_cpra",
+            json={
+                "antigenos": ["A2"],
+                "mode": "banana",
+            },
+        )
+
+    assert response.status_code == 422
 
 
 def test_health_endpoint_responde_ok():
@@ -87,7 +101,7 @@ def test_reference_data_es_hla_only():
     assert "hla_validation.csv" in data["validation_rule"]
     assert data["calculation_scope"] == "HLA_ONLY"
     assert "abo_groups" not in data
-    assert "modes" not in data
+    assert sorted(data["modes"]) == ["filter", "freq"]
 
 
 def test_get_hla_columns_devuelve_columnas_esperadas():

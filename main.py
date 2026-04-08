@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from datetime import datetime
+from typing import Literal
 import os
 import sqlite3
 
@@ -25,6 +26,7 @@ CORS_ORIGINS = [
     if origin.strip()
 ]
 HLA_COLS = ["A1", "A2", "B1", "B2", "DRB1_1", "DRB1_2", "DQB1_1", "DQB1_2"]
+VALID_MODES = {"freq", "filter"}
 
 DONORS_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS donors (
@@ -116,6 +118,7 @@ app.add_middleware(
 
 class InputData(BaseModel):
     antigenos: list[str]
+    mode: Literal["freq", "filter"] = "freq"
 
 
 @app.post("/calc_cpra")
@@ -134,6 +137,7 @@ def calc_cpra(data: InputData):
         )
 
     antigenos = [a.strip().upper() for a in data.antigenos if a and a.strip()]
+    mode = data.mode.lower().strip()
 
     if not antigenos:
         raise HTTPException(
@@ -151,6 +155,7 @@ def calc_cpra(data: InputData):
     return {
         "pra": round(pra * 100, 1),
         "N_donors": len(df_local),
+        "mode_used": mode.upper(),
         "scope": "HLA_ONLY",
         "last_update": app.state.last_update,
     }
@@ -196,6 +201,7 @@ def reference_data():
         "observed_antigen_count": len(observed_antigens),
         "supported_antigens": sorted(supported_antigens),
         "supported_antigen_count": len(supported_antigens),
+        "modes": sorted(VALID_MODES),
         "validation_rule": "Validated against data/hla_validation.csv only",
         "calculation_scope": "HLA_ONLY",
     }

@@ -4,14 +4,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PRA HLArg</title>
+  <title>CalcuPRAdora HLArgentina</title>
 
   <style>
     :root {
       --ice: #e9f4f6;
-      --sea: #86b9c6;
       --sea-deep: #2f6f80;
-      --sand: #f2dfb2;
       --ink: #1b2d34;
       --muted: #5f747b;
       --panel: rgba(255, 255, 255, 0.92);
@@ -111,6 +109,11 @@
       color: var(--sea-deep);
     }
 
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
     label {
       display: block;
       margin-bottom: 7px;
@@ -128,37 +131,25 @@
       background: var(--panel-strong);
     }
 
-    .grid {
+    .method-options {
       display: grid;
-      gap: 14px;
+      gap: 8px;
     }
 
-    .note-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .note-card {
-      padding: 14px;
-      border-radius: 16px;
+    .method-options div {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
       border: 1px solid var(--border);
+      border-radius: 12px;
       background: rgba(255, 255, 255, 0.75);
     }
 
-    .note-card strong {
-      display: block;
-      margin-bottom: 6px;
-      color: var(--sea-deep);
+    .method-options label {
+      margin: 0;
       font-size: 0.88rem;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-    }
-
-    .nota {
-      color: var(--muted);
-      font-size: 0.84rem;
-      line-height: 1.5;
+      font-weight: normal;
     }
 
     .actions {
@@ -222,7 +213,6 @@
       width: 100%;
     }
 
-    .meta-card,
     .footer-note {
       border-top: 1px solid var(--border);
       padding-top: 12px;
@@ -298,11 +288,12 @@
         padding: 14px;
       }
 
-      .hero,
-      .layout,
-      .note-grid {
-        grid-template-columns: 1fr;
+      .hero {
         flex-direction: column;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -312,8 +303,8 @@
   <div class="shell">
     <div class="hero">
       <div>
-        <h1>PRA HLArg</h1>
-        <div class="hero-subtitle">CalcuPRAdora HLArgentina. Herramienta hermana de cPRArgentina para estimar PRA usando solo incompatibilidades HLA, sin ajuste ABO y con foco comparativo.</div>
+        <h1>CalcuPRAdora HLArgentina</h1>
+        <div class="hero-subtitle">Herramienta hermana de cPRArgentina para estimar PRA usando solo incompatibilidades HLA, sin ajuste ABO y con foco comparativo.</div>
       </div>
       <div>
         <button class="ghost-button" type="button" onclick="abrirAyuda()">Ayuda</button>
@@ -326,17 +317,20 @@
           <div>
             <label for="antigenos">Antigenos no deseados</label>
             <input type="text" id="antigenos" placeholder="Ej: A2 B44 DR4 DQ7">
-            <div class="nota">Puede separarlos con espacio o coma. La validacion usa el catalogo oficial de <code>data/hla_validation.csv</code>.</div>
+            <div class="nota">Puede separarlos con espacio o coma.</div>
           </div>
 
-          <div class="note-grid">
-            <div class="note-card">
-              <strong>Calculo</strong>
-              <div class="nota">Se marca un donante como incompatible si cualquiera de los antigenos ingresados aparece en las columnas HLA de la base.</div>
-            </div>
-            <div class="note-card">
-              <strong>Alcance</strong>
-              <div class="nota">Esta version no pide grupo sanguineo y no aplica ninguna logica de compatibilidad ABO en la interfaz ni en el backend.</div>
+          <div>
+            <label>Metodo</label>
+            <div class="method-options">
+              <div>
+                <input type="radio" id="modeFreq" name="mode" value="freq" checked>
+                <label for="modeFreq">Probabilistico (freq)</label>
+              </div>
+              <div>
+                <input type="radio" id="modeFilter" name="mode" value="filter">
+                <label for="modeFilter">Empirico (filter)</label>
+              </div>
             </div>
           </div>
 
@@ -351,17 +345,13 @@
           <h2>Resultado</h2>
           <div class="result-box" id="resultado">
             <div class="placeholder">
-              Ingrese uno o mas antigenos HLA no deseados para estimar PRA sobre la base actual.
+              Ingrese uno o mas antigenos HLA.
             </div>
           </div>
         </div>
 
-        <div class="meta-card" id="dataset-info">
-          Cargando informacion de base...
-        </div>
-
         <div class="footer-note">
-          Research Use Only. Version HLA-only para comparacion metodologica con la herramienta principal.
+          Research Use Only. Version experimental para comparacion con otros metodos.
         </div>
       </section>
     </div>
@@ -374,9 +364,8 @@
         <button class="close-button" type="button" onclick="cerrarAyuda()">&times;</button>
       </div>
       <p><strong>1.</strong> Escriba uno o mas antigenos HLA no deseados, separados por espacio o coma.</p>
-      <p><strong>2.</strong> La app valida cada antigeno contra el catalogo HLA configurado.</p>
-      <p><strong>3.</strong> El PRA informado corresponde al porcentaje de donantes con al menos una incompatibilidad HLA.</p>
-      <p><strong>4.</strong> Esta version no incorpora ABO y sirve como herramienta hermana simple para comparacion.</p>
+      <p><strong>2.</strong> Elija el metodo `freq` o `filter`.</p>
+      <p><strong>3.</strong> El PRA informado corresponde al porcentaje de donantes incompatibles por HLA.</p>
     </div>
   </div>
 
@@ -384,12 +373,25 @@
     let debounceTimer = null;
     let lastSubmittedKey = "";
     let activeRequestId = 0;
+    let datasetTotalDonors = 0;
+    let datasetLastUpdate = "N/A";
+
+    function formatDateOnly(value) {
+      if (!value || value === "N/A") {
+        return "N/A";
+      }
+      return value.split(" ")[0];
+    }
 
     function getCurrentPayload() {
       const antigenInput = document.getElementById("antigenos").value;
       const antigenos = antigenInput.split(/[\s,]+/).filter(item => item.trim() !== "");
+      const modeRadio = document.querySelector("input[name='mode']:checked");
 
-      return { antigenos };
+      return {
+        antigenos,
+        mode: modeRadio ? modeRadio.value : "freq",
+      };
     }
 
     function renderPlaceholder(message) {
@@ -411,15 +413,11 @@
       try {
         const res = await fetch("/dataset_info");
         const data = await res.json();
-
-        document.getElementById("dataset-info").innerHTML =
-          "Herramienta: <b>" + data.app_name + "</b><br>" +
-          "Donantes en base: <b>" + data.total_donors + "</b><br>" +
-          "Antigenos validados: <b>" + data.supported_antigen_count + "</b><br>" +
-          "Ultima actualizacion: <b>" + data.last_update + "</b>";
+        datasetTotalDonors = data.total_donors || 0;
+        datasetLastUpdate = formatDateOnly(data.last_update || "N/A");
       } catch {
-        document.getElementById("dataset-info").innerText =
-          "No se pudo cargar informacion de base.";
+        datasetTotalDonors = 0;
+        datasetLastUpdate = "N/A";
       }
     }
 
@@ -429,7 +427,7 @@
 
       if (payload.antigenos.length === 0) {
         lastSubmittedKey = "";
-        renderPlaceholder("Ingrese uno o mas antigenos HLA no deseados para estimar PRA sobre la base actual.");
+        renderPlaceholder("Ingrese uno o mas antigenos HLA.");
         return;
       }
 
@@ -456,13 +454,14 @@
         }
 
         if (res.ok && data.pra !== undefined) {
+          const lastUpdate = formatDateOnly(data.last_update || datasetLastUpdate);
           resultadoDiv.innerHTML =
             "<div><div class='resultado-label'>PRA HLA</div>" +
             "<div class='resultado-numero'>" + data.pra.toFixed(1) + "%</div>" +
             "<div class='resultado-meta'>" +
-            "Alcance: " + data.scope + "<br>" +
-            "Donantes evaluados: " + data.N_donors + "<br>" +
-            "Actualizacion de base: " + data.last_update +
+            "Metodo: " + data.mode_used.toLowerCase() + "<br>" +
+            "Donantes en base: " + (data.N_donors || datasetTotalDonors) + "<br>" +
+            "Ultima actualizacion: " + lastUpdate +
             "</div></div>";
         } else {
           resultadoDiv.innerHTML =
@@ -485,14 +484,16 @@
 
     function limpiar() {
       document.getElementById("antigenos").value = "";
+      document.getElementById("modeFreq").checked = true;
       lastSubmittedKey = "";
-      renderPlaceholder("Ingrese uno o mas antigenos HLA no deseados para estimar PRA sobre la base actual.");
+      renderPlaceholder("Ingrese uno o mas antigenos HLA.");
     }
 
-    window.onload = function () {
-      cargarInfoDataset();
-      renderPlaceholder("Ingrese uno o mas antigenos HLA no deseados para estimar PRA sobre la base actual.");
+    window.onload = async function () {
+      await cargarInfoDataset();
+      renderPlaceholder("Ingrese uno o mas antigenos HLA.");
       document.getElementById("antigenos").addEventListener("input", programarCalculo);
+      document.querySelectorAll("input[name='mode']").forEach(radio => radio.addEventListener("change", programarCalculo));
       document.addEventListener("keydown", function (event) {
         if (event.key === "Escape") {
           cerrarAyuda();
