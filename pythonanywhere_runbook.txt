@@ -1,0 +1,132 @@
+PRA HLARG - PYTHONANYWHERE RUNBOOK
+
+1. Objetivo del deploy
+
+- Dejar PRA HLArg con el mismo esquema operativo de cPRArgentina:
+  - FastAPI + Uvicorn
+  - SQLite real en servidor
+  - asgi.py fijando CPRA_DB=cpra.db
+  - recarga manual desde panel Web
+
+
+2. Rutas sugeridas en PythonAnywhere
+
+- Proyecto:
+  /home/cprargentina/pra_hla_argentina
+
+- Base real:
+  /home/cprargentina/pra_hla_argentina/cpra.db
+
+- Virtualenv:
+  /home/cprargentina/.virtualenvs/cpra-venv
+
+- ASGI command recomendado al crear la web:
+  /home/cprargentina/.virtualenvs/cpra-venv/bin/uvicorn --app-dir /home/cprargentina/pra_hla_argentina --uds ${DOMAIN_SOCKET} asgi:app
+
+
+3. Archivos clave
+
+- main.py
+  App FastAPI (calculo HLA-only).
+
+- frontend/index.html
+  Interfaz web PRA HLArg.
+
+- load_donors.py
+  Importador CSV -> SQLite.
+  Acepta CSV sin columnas abo/rh.
+
+- data/hla_validation.csv
+  Catalogo oficial de validacion HLA.
+
+- asgi.py
+  Fuerza CPRA_DB=cpra.db para produccion.
+
+
+4. Primer deploy
+
+En Bash console:
+
+  workon cpra-venv
+  cd ~/pra_hla_argentina
+  pip install -r requirements.txt
+
+En Web:
+- Configurar app ASGI con el comando indicado arriba.
+- Verificar que apunte al virtualenv correcto.
+- Reload.
+
+
+5. Actualizar codigo desde GitHub
+
+En Bash console:
+
+  workon cpra-venv
+  cd ~/pra_hla_argentina
+  git pull origin main
+
+Luego:
+- Web -> Reload
+
+
+6. Cargar/actualizar base desde CSV
+
+Subir CSV (por ejemplo):
+  /home/cprargentina/uploads/donors_sinABO.csv
+
+Carga incremental:
+
+  workon cpra-venv
+  cd ~/pra_hla_argentina
+  python load_donors.py --csv "/home/cprargentina/uploads/donors_sinABO.csv" --mode append --db cpra.db
+
+Reconstruccion completa:
+
+  python load_donors.py --csv "/home/cprargentina/uploads/donors_sinABO.csv" --mode rebuild --db cpra.db
+
+Nota:
+- Si el CSV no trae abo/rh, se completa vacio automaticamente.
+
+Despues de cargar:
+- Web -> Reload
+
+
+7. Chequeo rapido de salud
+
+Abrir:
+  https://<tu-subdominio>.pythonanywhere.com/health
+
+Esperado:
+- status = ok
+- app = PRA HLArg
+- database = cpra.db
+- total_donors = numero esperado
+
+
+8. Verificacion funcional minima
+
+1. Home carga sin errores.
+2. Ingreso de antigeno valido (ej: A2) devuelve PRA.
+3. Ingreso de antigeno valido pero no observado (ej: B76) devuelve PRA.
+4. Ingreso de antigeno invalido devuelve error legible.
+
+
+9. Errores tipicos
+
+- /health muestra cpra_demo.db:
+  revisar asgi.py y confirmar CPRA_DB=cpra.db.
+
+- No cambia total_donors:
+  correr load_donors.py y luego Reload.
+
+- Antigeno valido rechazado:
+  revisar data/hla_validation.csv.
+
+
+10. Regla para no romper deploy
+
+1. git pull
+2. (si aplica) load_donors.py
+3. Reload
+4. revisar /health
+5. prueba funcional en /
