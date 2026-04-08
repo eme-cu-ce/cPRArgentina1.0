@@ -1,4 +1,3 @@
-from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Literal
 import os
@@ -119,13 +118,7 @@ def load_data_from_db(app: FastAPI):
     print("Base recargada. Donantes:", len(df_local))
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    load_data_from_db(app)
-    yield
-
-
-app = FastAPI(title=APP_NAME, description=APP_DESCRIPTION, lifespan=lifespan)
+app = FastAPI(title=APP_NAME, description=APP_DESCRIPTION)
 
 app.add_middleware(
     CORSMiddleware,
@@ -141,8 +134,14 @@ class InputData(BaseModel):
     mode: Literal["freq", "filter"] = "freq"
 
 
+def ensure_data_loaded() -> None:
+    if not hasattr(app.state, "df"):
+        load_data_from_db(app)
+
+
 @app.post("/calc_cpra")
 def calc_cpra(data: InputData):
+    ensure_data_loaded()
     df_local: pd.DataFrame = getattr(app.state, "df", pd.DataFrame())
     supported_antigens = getattr(app.state, "supported_antigens", set())
     columnas_hla = getattr(app.state, "hla_columns", [])
@@ -191,6 +190,7 @@ def reload_db():
 
 @app.get("/health")
 def health():
+    ensure_data_loaded()
     return {
         "status": "ok",
         "app": APP_NAME,
@@ -201,6 +201,7 @@ def health():
 
 @app.get("/dataset_info")
 def dataset_info():
+    ensure_data_loaded()
     return {
         "app_name": APP_NAME,
         "total_donors": getattr(app.state, "total_donors", 0),
@@ -215,6 +216,7 @@ def dataset_info():
 
 @app.get("/reference_data")
 def reference_data():
+    ensure_data_loaded()
     observed_antigens = getattr(app.state, "observed_antigens", set())
     supported_antigens = getattr(app.state, "supported_antigens", set())
     return {
