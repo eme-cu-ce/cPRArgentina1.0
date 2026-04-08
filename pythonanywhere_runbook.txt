@@ -27,7 +27,7 @@ PRA HLARG - PYTHONANYWHERE RUNBOOK
 3. Archivos clave
 
 - main.py
-  App FastAPI (calculo HLA-only).
+  App FastAPI (cálculo HLA-only).
 
 - frontend/index.html
   Interfaz web PRA HLArg.
@@ -37,7 +37,7 @@ PRA HLARG - PYTHONANYWHERE RUNBOOK
   Acepta CSV sin columnas abo/rh.
 
 - data/hla_validation.csv
-  Catalogo oficial de validacion HLA.
+  Catálogo oficial de validación HLA.
 
 - asgi.py
   Fuerza CPRA_DB=cpra.db para produccion.
@@ -85,7 +85,7 @@ Reconstruccion completa:
   python load_donors.py --csv "/home/cprargentina/uploads/donors_sinABO.csv" --mode rebuild --db cpra.db
 
 Nota:
-- Si el CSV no trae abo/rh, se completa vacio automaticamente.
+- Si el CSV no trae abo/rh, se completa vacío automáticamente.
 
 Despues de cargar:
 - Web -> Reload
@@ -106,9 +106,9 @@ Esperado:
 8. Verificacion funcional minima
 
 1. Home carga sin errores.
-2. Ingreso de antigeno valido (ej: A2) devuelve PRA.
-3. Ingreso de antigeno valido pero no observado (ej: B76) devuelve PRA.
-4. Ingreso de antigeno invalido devuelve error legible.
+2. Ingreso de antígeno válido (ej: A2) devuelve PRA.
+3. Ingreso de antígeno válido pero no observado (ej: B76) devuelve PRA.
+4. Ingreso de antígeno inválido devuelve error legible.
 
 
 9. Errores tipicos

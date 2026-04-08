@@ -315,21 +315,21 @@
       <section class="panel">
         <div class="grid">
           <div>
-            <label for="antigenos">Antigenos no deseados</label>
+            <label for="antigenos">Antígenos no deseados</label>
             <input type="text" id="antigenos" placeholder="Ej: A2 B44 DR4 DQ7">
             <div class="nota">Puede separarlos con espacio o coma.</div>
           </div>
 
           <div>
-            <label>Metodo</label>
+            <label>Método</label>
             <div class="method-options">
               <div>
                 <input type="radio" id="modeFreq" name="mode" value="freq" checked>
-                <label for="modeFreq">Probabilistico (freq)</label>
+                <label for="modeFreq">Probabilístico (freq)</label>
               </div>
               <div>
                 <input type="radio" id="modeFilter" name="mode" value="filter">
-                <label for="modeFilter">Empirico (filter)</label>
+                <label for="modeFilter">Empírico (filter)</label>
               </div>
             </div>
           </div>
@@ -345,13 +345,13 @@
           <h2>Resultado</h2>
           <div class="result-box" id="resultado">
             <div class="placeholder">
-              Ingrese uno o mas antigenos HLA.
+              Ingrese uno o más antígenos HLA.
             </div>
           </div>
         </div>
 
         <div class="footer-note">
-          Research Use Only. Version experimental para comparacion con otros metodos.
+          Research Use Only. Versión experimental para comparación con otros métodos.
         </div>
       </section>
     </div>
@@ -360,11 +360,11 @@
   <div class="modal-backdrop" id="help-modal" onclick="cerrarAyuda(event)">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="help-title" onclick="event.stopPropagation()">
       <div class="modal-head">
-        <h3 id="help-title">Como usar la calculadora</h3>
+        <h3 id="help-title">Cómo usar la calculadora</h3>
         <button class="close-button" type="button" onclick="cerrarAyuda()">&times;</button>
       </div>
-      <p><strong>1.</strong> Escriba uno o mas antigenos HLA no deseados, separados por espacio o coma.</p>
-      <p><strong>2.</strong> Elija el metodo `freq` o `filter`.</p>
+      <p><strong>1.</strong> Escriba uno o más antígenos HLA no deseados, separados por espacio o coma.</p>
+      <p><strong>2.</strong> Elija el método `freq` o `filter`.</p>
       <p><strong>3.</strong> El PRA informado corresponde al porcentaje de donantes incompatibles por HLA.</p>
     </div>
   </div>
@@ -427,7 +427,7 @@
 
       if (payload.antigenos.length === 0) {
         lastSubmittedKey = "";
-        renderPlaceholder("Ingrese uno o mas antigenos HLA.");
+        renderPlaceholder("Ingrese uno o más antígenos HLA.");
         return;
       }
 
@@ -459,9 +459,9 @@
             "<div><div class='resultado-label'>PRA HLA</div>" +
             "<div class='resultado-numero'>" + data.pra.toFixed(1) + "%</div>" +
             "<div class='resultado-meta'>" +
-            "Metodo: " + data.mode_used.toLowerCase() + "<br>" +
+            "Método: " + data.mode_used.toLowerCase() + "<br>" +
             "Donantes en base: " + (data.N_donors || datasetTotalDonors) + "<br>" +
-            "Ultima actualizacion: " + lastUpdate +
+            "Última actualización: " + lastUpdate +
             "</div></div>";
         } else {
           resultadoDiv.innerHTML =
@@ -486,12 +486,12 @@
       document.getElementById("antigenos").value = "";
       document.getElementById("modeFreq").checked = true;
       lastSubmittedKey = "";
-      renderPlaceholder("Ingrese uno o mas antigenos HLA.");
+      renderPlaceholder("Ingrese uno o más antígenos HLA.");
     }
 
     window.onload = async function () {
       await cargarInfoDataset();
-      renderPlaceholder("Ingrese uno o mas antigenos HLA.");
+      renderPlaceholder("Ingrese uno o más antígenos HLA.");
       document.getElementById("antigenos").addEventListener("input", programarCalculo);
       document.querySelectorAll("input[name='mode']").forEach(radio => radio.addEventListener("change", programarCalculo));
       document.addEventListener("keydown", function (event) {

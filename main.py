@@ -55,7 +55,7 @@ def get_hla_columns(columns: list[str]) -> list[str]:
 def load_supported_antigens(validation_table_path: str = VALIDATION_TABLE_PATH) -> set[str]:
     df_validation = pd.read_csv(validation_table_path, dtype=str).fillna("")
     if "antigen" not in df_validation.columns:
-        raise ValueError("La tabla de validacion HLA debe incluir la columna 'antigen'.")
+        raise ValueError("La tabla de validación HLA debe incluir la columna 'antigen'.")
 
     return {
         antigen.strip().upper()
@@ -66,6 +66,26 @@ def load_supported_antigens(validation_table_path: str = VALIDATION_TABLE_PATH) 
 
 def is_supported_antigen(antigen: str, supported_antigens: set[str]) -> bool:
     return antigen in supported_antigens
+
+
+def calc_hla_filter_pra(df_local: pd.DataFrame, columnas_hla: list[str], antigenos: list[str]) -> float:
+    mask_hla = df_local[columnas_hla].isin(antigenos).any(axis=1)
+    return mask_hla.sum() / len(df_local)
+
+
+def calc_hla_freq_pra(df_local: pd.DataFrame, columnas_hla: list[str], antigenos: list[str]) -> float:
+    # Aproximación probabilística HLA-only:
+    # combina probabilidades marginales por antígeno asumiendo independencia.
+    probs = []
+    for antigen in antigenos:
+        has_antigen = df_local[columnas_hla].eq(antigen).any(axis=1)
+        probs.append(has_antigen.sum() / len(df_local))
+
+    no_hit_prob = 1.0
+    for prob in probs:
+        no_hit_prob *= (1 - prob)
+
+    return 1 - no_hit_prob
 
 
 def load_data_from_db(app: FastAPI):
@@ -142,15 +162,17 @@ def calc_cpra(data: InputData):
     if not antigenos:
         raise HTTPException(
             status_code=400,
-            detail="Debe enviar al menos un antigeno.",
+            detail="Debe enviar al menos un antígeno.",
         )
 
     invalid = [a for a in antigenos if not is_supported_antigen(a, supported_antigens)]
     if invalid:
-        raise HTTPException(status_code=400, detail=f"Antigenos invalidos: {invalid}")
+        raise HTTPException(status_code=400, detail=f"Antígenos inválidos: {invalid}")
 
-    mask_hla = df_local[columnas_hla].isin(antigenos).any(axis=1)
-    pra = mask_hla.sum() / len(df_local)
+    if mode == "filter":
+        pra = calc_hla_filter_pra(df_local, columnas_hla, antigenos)
+    else:
+        pra = calc_hla_freq_pra(df_local, columnas_hla, antigenos)
 
     return {
         "pra": round(pra * 100, 1),

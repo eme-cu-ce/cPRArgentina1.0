@@ -4,14 +4,14 @@ Calculadora de PRA basada solo en incompatibilidades HLA, usando base de donante
 
 Alias interno: CalcuPRAdora HLArgentina.
 
-Esta aplicacion es una herramienta hermana de `cPRArgentina` para comparacion metodologica. A diferencia de la app principal, aqui no se usa ABO en ningun punto del flujo.
+Esta aplicación es una herramienta hermana de `cPRArgentina` para comparación metodológica. A diferencia de la app principal, aquí no se usa ABO en ningún punto del flujo.
 
 ## Alcance actual
 
 - FastAPI + frontend HTML integrado
-- Calculo HLA-only (sin ajuste ni filtrado ABO)
-- Modos disponibles: `freq` y `filter` (sin logica ABO)
-- Validacion de antigenos contra `data/hla_validation.csv`
+- Cálculo HLA-only (sin ajuste ni filtrado ABO)
+- Modos disponibles: `freq` y `filter` (sin lógica ABO)
+- Validación de antígenos contra `data/hla_validation.csv`
 - Base SQLite real o demo
 - Endpoints de salud, metadata y referencia
 
@@ -19,18 +19,18 @@ Esta aplicacion es una herramienta hermana de `cPRArgentina` para comparacion me
 
 - No hay campo ABO en el input
 - No hay salida asociada a ajuste ABO
-- Resultado unico: porcentaje PRA por incompatibilidad HLA
+- Resultado único: porcentaje PRA por incompatibilidad HLA
 
 ## Endpoints
 
 - `GET /` sirve la interfaz
 - `POST /calc_cpra` calcula PRA HLA-only
 - `GET /dataset_info` devuelve metadata de la base
-- `GET /reference_data` devuelve antigenos observados/soportados
+- `GET /reference_data` devuelve antígenos observados/soportados
 - `GET /health` devuelve estado del servicio
 - `POST /reload_db` recarga la base en memoria
 
-## Ejecucion local
+## Ejecución local
 
 1. Instalar dependencias:
 
@@ -50,7 +50,7 @@ uvicorn main:app --reload
 http://127.0.0.1:8000
 ```
 
-## Seleccion de base
+## Selección de base
 
 Por defecto, la app usa `cpra_demo.db`.
 
@@ -73,7 +73,7 @@ uvicorn main:app --reload
 ## Variables de entorno
 
 - `CPRA_DB`: nombre/ruta del archivo SQLite
-- `CPRA_CORS_ORIGINS`: origenes permitidos separados por coma (default `*`)
+- `CPRA_CORS_ORIGINS`: orígenes permitidos separados por coma (default `*`)
 
 ## Dataset demo
 
@@ -83,7 +83,7 @@ Puede recrearse con:
 python init_demo_db.py
 ```
 
-Si `cpra_demo.db` no existe al iniciar, se recrea automaticamente.
+Si `cpra_demo.db` no existe al iniciar, se recrea automáticamente.
 
 ## Carga de donantes
 
@@ -97,22 +97,22 @@ Incremental:
 python load_donors.py --csv "C:\path\to\donors.csv" --mode append
 ```
 
-Reconstruccion completa:
+Reconstrucción completa:
 
 ```bash
 python load_donors.py --csv "C:\path\to\donors.csv" --mode rebuild
 ```
 
-## Fuente de validacion
+## Fuente de validación
 
-Catalogo oficial HLA en:
+Catálogo oficial HLA en:
 
 - `data/hla_validation.csv`
 
-La validacion es independiente de la presencia en la base de donantes.
+La validación es independiente de la presencia en la base de donantes.
 
 ## Nota de uso
 
 Research Use Only.
 
-Herramienta orientada a comparacion metodologica, investigacion y validacion. No reemplaza decision clinica independiente.
+Herramienta orientada a comparación metodológica, investigación y validación. No reemplaza decisión clínica independiente.

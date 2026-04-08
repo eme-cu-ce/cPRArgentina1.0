@@ -1,6 +1,7 @@
 import os
 import sys
 
+import pandas as pd
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
@@ -69,6 +70,35 @@ def test_mode_invalido_rechazado():
         )
 
     assert response.status_code == 422
+
+
+def test_freq_y_filter_difieren_en_dataset_controlado():
+    df_control = pd.DataFrame(
+        {
+            "A1": ["A2", "A2", "A1", "A1"],
+            "A2": ["", "", "", ""],
+            "B1": ["B44", "", "B44", ""],
+            "B2": ["", "", "", ""],
+            "DRB1_1": ["", "", "", ""],
+            "DRB1_2": ["", "", "", ""],
+            "DQB1_1": ["", "", "", ""],
+            "DQB1_2": ["", "", "", ""],
+        }
+    )
+
+    app.state.df = df_control
+    app.state.hla_columns = ["A1", "A2", "B1", "B2", "DRB1_1", "DRB1_2", "DQB1_1", "DQB1_2"]
+    app.state.supported_antigens = {"A1", "A2", "B44"}
+    app.state.last_update = "2026-04-08 00:00:00"
+
+    r_freq = calc_cpra(InputData(antigenos=["A2", "B44"], mode="freq"))
+    r_filter = calc_cpra(InputData(antigenos=["A2", "B44"], mode="filter"))
+
+    assert r_freq["pra"] != r_filter["pra"]
+    assert r_freq["mode_used"] == "FREQ"
+    assert r_filter["mode_used"] == "FILTER"
+
+    load_data_from_db(app)
 
 
 def test_health_endpoint_responde_ok():
