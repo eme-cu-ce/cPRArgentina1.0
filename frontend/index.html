@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRA HLArg</title>
+
+  <style>
+    :root {
+      --ice: #e9f4f6;
+      --sea: #86b9c6;
+      --sea-deep: #2f6f80;
+      --sand: #f2dfb2;
+      --ink: #1b2d34;
+      --muted: #5f747b;
+      --panel: rgba(255, 255, 255, 0.92);
+      --panel-strong: #ffffff;
+      --border: rgba(47, 111, 128, 0.18);
+      --success: #1e6a4a;
+      --error: #8a1c1c;
+      --error-bg: #fdecec;
+      --shadow: 0 22px 48px rgba(27, 45, 52, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Tahoma, Verdana, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 12%, rgba(242, 223, 178, 0.52), transparent 18%),
+        linear-gradient(180deg, #dceef1 0%, #f6fbfc 38%, #ffffff 100%);
+    }
+
+    .shell {
+      width: min(1120px, calc(100vw - 28px));
+      margin: 14px auto;
+      padding: 18px;
+      border-radius: 26px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0.74));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(2rem, 3.4vw, 2.8rem);
+      color: var(--sea-deep);
+      letter-spacing: 0.02em;
+    }
+
+    .hero-subtitle {
+      margin-top: 6px;
+      max-width: 62ch;
+      font-size: 0.94rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .ghost-button,
+    .solid-button {
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 0.88rem;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .ghost-button {
+      background: rgba(255, 255, 255, 0.85);
+      border-color: rgba(47, 111, 128, 0.28);
+      color: var(--sea-deep);
+    }
+
+    .solid-button {
+      background: var(--sea-deep);
+      color: white;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 18px;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 0.98rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--sea-deep);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 0.92rem;
+      font-weight: bold;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 13px;
+      border-radius: 12px;
+      border: 1px solid rgba(47, 111, 128, 0.28);
+      font-size: 1rem;
+      color: var(--ink);
+      background: var(--panel-strong);
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .note-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .note-card {
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.75);
+    }
+
+    .note-card strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--sea-deep);
+      font-size: 0.88rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .nota {
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: end;
+    }
+
+    .result-card {
+      display: grid;
+      gap: 12px;
+      height: 100%;
+    }
+
+    .result-box {
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(134, 185, 198, 0.1), rgba(255, 255, 255, 0.88)),
+        #f7fbfc;
+      padding: 20px;
+      min-height: 170px;
+      display: flex;
+      align-items: center;
+    }
+
+    .resultado-numero {
+      font-size: clamp(2.9rem, 5.3vw, 4.5rem);
+      font-weight: bold;
+      color: var(--success);
+      line-height: 1;
+    }
+
+    .resultado-label {
+      margin-bottom: 8px;
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--sea-deep);
+    }
+
+    .resultado-meta {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+
+    .placeholder {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.55;
+      max-width: 38ch;
+    }
+
+    .resultado-error {
+      color: var(--error);
+      background: var(--error-bg);
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      width: 100%;
+    }
+
+    .meta-card,
+    .footer-note {
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(27, 45, 52, 0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 20;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      width: min(560px, 100%);
+      background: white;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 24px 48px rgba(27, 45, 52, 0.22);
+      border: 1px solid var(--border);
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .modal h3 {
+      margin: 0;
+      color: var(--sea-deep);
+    }
+
+    .close-button {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 1.2rem;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .modal p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.92rem;
+    }
+
+    .modal strong {
+      color: var(--ink);
+    }
+
+    @media (max-width: 900px) {
+      body {
+        min-height: auto;
+      }
+
+      .shell {
+        margin: 10px auto;
+        padding: 14px;
+      }
+
+      .hero,
+      .layout,
+      .note-grid {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="shell">
+    <div class="hero">
+      <div>
+        <h1>PRA HLArg</h1>
+        <div class="hero-subtitle">CalcuPRAdora HLArgentina. Herramienta hermana de cPRArgentina para estimar PRA usando solo incompatibilidades HLA, sin ajuste ABO y con foco comparativo.</div>
+      </div>
+      <div>
+        <button class="ghost-button" type="button" onclick="abrirAyuda()">Ayuda</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <section class="panel">
+        <div class="grid">
+          <div>
+            <label for="antigenos">Antigenos no deseados</label>
+            <input type="text" id="antigenos" placeholder="Ej: A2 B44 DR4 DQ7">
+            <div class="nota">Puede separarlos con espacio o coma. La validacion usa el catalogo oficial de <code>data/hla_validation.csv</code>.</div>
+          </div>
+
+          <div class="note-grid">
+            <div class="note-card">
+              <strong>Calculo</strong>
+              <div class="nota">Se marca un donante como incompatible si cualquiera de los antigenos ingresados aparece en las columnas HLA de la base.</div>
+            </div>
+            <div class="note-card">
+              <strong>Alcance</strong>
+              <div class="nota">Esta version no pide grupo sanguineo y no aplica ninguna logica de compatibilidad ABO en la interfaz ni en el backend.</div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="solid-button" id="clear" type="button" onclick="limpiar()">Limpiar</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel result-card">
+        <div>
+          <h2>Resultado</h2>
+          <div class="result-box" id="resultado">
+            <div class="placeholder">
+              Ingrese uno o mas antigenos HLA no deseados para estimar PRA sobre la base actual.
+            </div>
+          </div>
+        </div>
+
+        <div class="meta-card" id="dataset-info">
+          Cargando informacion de base...
+        </div>
+
+        <div class="footer-note">
+          Research Use Only. Version HLA-only para comparacion metodologica con la herramienta principal.
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="help-modal" onclick="cerrarAyuda(event)">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="help-title" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <h3 id="help-title">Como usar la calculadora</h3>
+        <button class="close-button" type="button" onclick="cerrarAyuda()">&times;</button>
+      </div>
+      <p><strong>1.</strong> Escriba uno o mas antigenos HLA no deseados, separados por espacio o coma.</p>
+      <p><strong>2.</strong> La app valida cada antigeno contra el catalogo HLA configurado.</p>
+      <p><strong>3.</strong> El PRA informado corresponde al porcentaje de donantes con al menos una incompatibilidad HLA.</p>
+      <p><strong>4.</strong> Esta version no incorpora ABO y sirve como herramienta hermana simple para comparacion.</p>
+    </div>
+  </div>
+
+  <script>
+    let debounceTimer = null;
+    let lastSubmittedKey = "";
+    let activeRequestId = 0;
+
+    function getCurrentPayload() {
+      const antigenInput = document.getElementById("antigenos").value;
+      const antigenos = antigenInput.split(/[\s,]+/).filter(item => item.trim() !== "");
+
+      return { antigenos };
+    }
+
+    function renderPlaceholder(message) {
+      document.getElementById("resultado").innerHTML =
+        "<div class='placeholder'>" + message + "</div>";
+    }
+
+    function abrirAyuda() {
+      document.getElementById("help-modal").classList.add("open");
+    }
+
+    function cerrarAyuda(event) {
+      if (!event || event.target.id === "help-modal") {
+        document.getElementById("help-modal").classList.remove("open");
+      }
+    }
+
+    async function cargarInfoDataset() {
+      try {
+        const res = await fetch("/dataset_info");
+        const data = await res.json();
+
+        document.getElementById("dataset-info").innerHTML =
+          "Herramienta: <b>" + data.app_name + "</b><br>" +
+          "Donantes en base: <b>" + data.total_donors + "</b><br>" +
+          "Antigenos validados: <b>" + data.supported_antigen_count + "</b><br>" +
+          "Ultima actualizacion: <b>" + data.last_update + "</b>";
+      } catch {
+        document.getElementById("dataset-info").innerText =
+          "No se pudo cargar informacion de base.";
+      }
+    }
+
+    async function calcularAutomatico() {
+      const payload = getCurrentPayload();
+      const resultadoDiv = document.getElementById("resultado");
+
+      if (payload.antigenos.length === 0) {
+        lastSubmittedKey = "";
+        renderPlaceholder("Ingrese uno o mas antigenos HLA no deseados para estimar PRA sobre la base actual.");
+        return;
+      }
+
+      const payloadKey = JSON.stringify(payload);
+      if (payloadKey === lastSubmittedKey) {
+        return;
+      }
+
+      lastSubmittedKey = payloadKey;
+      activeRequestId += 1;
+      const requestId = activeRequestId;
+
+      try {
+        const res = await fetch("/calc_cpra", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (requestId !== activeRequestId) {
+          return;
+        }
+
+        if (res.ok && data.pra !== undefined) {
+          resultadoDiv.innerHTML =
+            "<div><div class='resultado-label'>PRA HLA</div>" +
+            "<div class='resultado-numero'>" + data.pra.toFixed(1) + "%</div>" +
+            "<div class='resultado-meta'>" +
+            "Alcance: " + data.scope + "<br>" +
+            "Donantes evaluados: " + data.N_donors + "<br>" +
+            "Actualizacion de base: " + data.last_update +
+            "</div></div>";
+        } else {
+          resultadoDiv.innerHTML =
+            "<div class='resultado-error'>" + (data.detail || "Error inesperado.") + "</div>";
+        }
+      } catch {
+        if (requestId !== activeRequestId) {
+          return;
+        }
+
+        resultadoDiv.innerHTML =
+          "<div class='resultado-error'>Error conectando con el servidor.</div>";
+      }
+    }
+
+    function programarCalculo() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(calcularAutomatico, 350);
+    }
+
+    function limpiar() {
+      document.getElementById("antigenos").value = "";
+      lastSubmittedKey = "";
+      renderPlaceholder("Ingrese uno o mas antigenos HLA no deseados para estimar PRA sobre la base actual.");
+    }
+
+    window.onload = function () {
+      cargarInfoDataset();
+      renderPlaceholder("Ingrese uno o mas antigenos HLA no deseados para estimar PRA sobre la base actual.");
+      document.getElementById("antigenos").addEventListener("input", programarCalculo);
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          cerrarAyuda();
+        }
+      });
+    };
+  </script>
+</body>
+
+</html>

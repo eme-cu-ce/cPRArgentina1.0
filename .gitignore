@@ -1,0 +1,12 @@
+__pycache__/
+.pytest_cache/
+.venv/
+*.pyc
+
+cpra.db
+*.bak
+*.sqlite
+*.sqlite3
+
+.env
+.DS_Store
