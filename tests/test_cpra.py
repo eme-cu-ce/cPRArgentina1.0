@@ -16,6 +16,8 @@ from main import (
     is_supported_antigen,
     load_data_from_db,
     load_supported_antigens,
+    normalize_hla_columns,
+    normalize_hla_value,
     reference_data,
 )
 
@@ -72,6 +74,42 @@ def test_mode_invalido_rechazado():
     assert response.status_code == 422
 
 
+def test_normalize_hla_value_maneja_numericos_y_normalizados():
+    assert normalize_hla_value("02", "A") == ("A2", True)
+    assert normalize_hla_value("A02", "A") == ("A2", True)
+    assert normalize_hla_value("A2", "A") == ("A2", False)
+    assert normalize_hla_value("044", "B") == ("B44", True)
+    assert normalize_hla_value("DR1404", "DR") == ("DR1404", False)
+    assert normalize_hla_value("-", "DQ") == ("-", False)
+    assert normalize_hla_value("", "DQ") == ("", False)
+
+
+def test_normalize_hla_columns_aplica_prefijos_por_columna():
+    df = pd.DataFrame(
+        {
+            "A1": ["02", "A2", "-"],
+            "A2": ["24", "", "A03"],
+            "B1": ["044", "B44", "7"],
+            "B2": ["8", "-", ""],
+            "DRB1_1": ["4", "DR1404", "07"],
+            "DRB1_2": ["15", "", "-"],
+            "DQB1_1": ["7", "DQ2", ""],
+            "DQB1_2": ["04", "-", "DQ7"],
+        }
+    )
+
+    changed = normalize_hla_columns(df, ["A1", "A2", "B1", "B2", "DRB1_1", "DRB1_2", "DQB1_1", "DQB1_2"])
+
+    assert changed > 0
+    assert df.loc[0, "A1"] == "A2"
+    assert df.loc[0, "B1"] == "B44"
+    assert df.loc[2, "B1"] == "B7"
+    assert df.loc[0, "DRB1_1"] == "DR4"
+    assert df.loc[2, "DRB1_1"] == "DR7"
+    assert df.loc[0, "DQB1_2"] == "DQ4"
+    assert df.loc[2, "A1"] == "-"
+
+
 def test_freq_y_filter_difieren_en_dataset_controlado():
     df_control = pd.DataFrame(
         {
@@ -108,6 +146,7 @@ def test_health_endpoint_responde_ok():
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
     assert response.json()["app"] == "PRA HLArg"
+    assert "data_quality" in response.json()
 
 
 def test_dataset_info_expone_metadata_hla():
@@ -118,6 +157,9 @@ def test_dataset_info_expone_metadata_hla():
     assert info["observed_antigen_count"] > 0
     assert info["supported_antigen_count"] > 0
     assert info["calculation_scope"] == "HLA_ONLY"
+    assert "data_quality" in info
+    assert "normalized_hla_value_count" in info["data_quality"]
+    assert "unsupported_observed_antigen_count" in info["data_quality"]
 
 
 def test_reference_data_es_hla_only():
@@ -132,6 +174,8 @@ def test_reference_data_es_hla_only():
     assert data["calculation_scope"] == "HLA_ONLY"
     assert "abo_groups" not in data
     assert sorted(data["modes"]) == ["filter", "freq"]
+    assert "data_quality" in data
+    assert "unsupported_observed_antigens" in data["data_quality"]
 
 
 def test_get_hla_columns_devuelve_columnas_esperadas():

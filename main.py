@@ -26,6 +26,16 @@ CORS_ORIGINS = [
 ]
 HLA_COLS = ["A1", "A2", "B1", "B2", "DRB1_1", "DRB1_2", "DQB1_1", "DQB1_2"]
 VALID_MODES = {"freq", "filter"}
+HLA_PREFIX_BY_COLUMN = {
+    "A1": "A",
+    "A2": "A",
+    "B1": "B",
+    "B2": "B",
+    "DRB1_1": "DR",
+    "DRB1_2": "DR",
+    "DQB1_1": "DQ",
+    "DQB1_2": "DQ",
+}
 
 DONORS_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS donors (
@@ -67,6 +77,45 @@ def is_supported_antigen(antigen: str, supported_antigens: set[str]) -> bool:
     return antigen in supported_antigens
 
 
+def normalize_hla_value(raw_value: str, prefix: str) -> tuple[str, bool]:
+    value = (raw_value or "").strip().upper()
+    if not value or value == "-":
+        return value, False
+
+    if value.startswith(prefix):
+        suffix = value[len(prefix):]
+        if suffix.isdigit():
+            normalized = f"{prefix}{int(suffix)}"
+            return normalized, normalized != value
+        return value, False
+
+    if value.isdigit():
+        normalized = f"{prefix}{int(value)}"
+        return normalized, True
+
+    return value, False
+
+
+def normalize_hla_columns(df_local: pd.DataFrame, columnas_hla: list[str]) -> int:
+    normalized_count = 0
+
+    for col in columnas_hla:
+        prefix = HLA_PREFIX_BY_COLUMN.get(col)
+        if not prefix:
+            continue
+
+        new_values: list[str] = []
+        for value in df_local[col].tolist():
+            normalized_value, changed = normalize_hla_value(value, prefix)
+            new_values.append(normalized_value)
+            if changed:
+                normalized_count += 1
+
+        df_local[col] = new_values
+
+    return normalized_count
+
+
 def calc_hla_filter_pra(df_local: pd.DataFrame, columnas_hla: list[str], antigenos: list[str]) -> float:
     mask_hla = df_local[columnas_hla].isin(antigenos).any(axis=1)
     return mask_hla.sum() / len(df_local)
@@ -101,19 +150,23 @@ def load_data_from_db(app: FastAPI):
         df_local[col] = df_local[col].fillna("").astype(str).str.strip().str.upper()
 
     columnas_hla = get_hla_columns(df_local.columns.tolist())
+    normalized_hla_value_count = normalize_hla_columns(df_local, columnas_hla)
     antigens_observados = {
         antigen
         for antigen in df_local[columnas_hla].stack().dropna().unique()
         if antigen and antigen != "-"
     }
+    unsupported_observed_antigens = sorted(antigens_observados - supported_antigens)
 
     app.state.df = df_local
     app.state.supported_antigens = supported_antigens
     app.state.observed_antigens = antigens_observados
+    app.state.unsupported_observed_antigens = unsupported_observed_antigens
     app.state.hla_columns = columnas_hla
     app.state.last_update = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     app.state.total_donors = len(df_local)
     app.state.db_path = DB_PATH
+    app.state.normalized_hla_value_count = normalized_hla_value_count
 
     print("Base recargada. Donantes:", len(df_local))
 
@@ -191,17 +244,24 @@ def reload_db():
 @app.get("/health")
 def health():
     ensure_data_loaded()
+    unsupported_observed_antigens = getattr(app.state, "unsupported_observed_antigens", [])
     return {
         "status": "ok",
         "app": APP_NAME,
         "database": os.path.basename(getattr(app.state, "db_path", DB_PATH)),
         "total_donors": getattr(app.state, "total_donors", 0),
+        "data_quality": {
+            "normalized_hla_value_count": getattr(app.state, "normalized_hla_value_count", 0),
+            "unsupported_observed_antigen_count": len(unsupported_observed_antigens),
+            "has_warnings": bool(unsupported_observed_antigens),
+        },
     }
 
 
 @app.get("/dataset_info")
 def dataset_info():
     ensure_data_loaded()
+    unsupported_observed_antigens = getattr(app.state, "unsupported_observed_antigens", [])
     return {
         "app_name": APP_NAME,
         "total_donors": getattr(app.state, "total_donors", 0),
@@ -211,6 +271,11 @@ def dataset_info():
         "observed_antigen_count": len(getattr(app.state, "observed_antigens", set())),
         "supported_antigen_count": len(getattr(app.state, "supported_antigens", set())),
         "calculation_scope": "HLA_ONLY",
+        "data_quality": {
+            "normalized_hla_value_count": getattr(app.state, "normalized_hla_value_count", 0),
+            "unsupported_observed_antigen_count": len(unsupported_observed_antigens),
+            "unsupported_observed_antigens": unsupported_observed_antigens,
+        },
     }
 
 
@@ -219,6 +284,7 @@ def reference_data():
     ensure_data_loaded()
     observed_antigens = getattr(app.state, "observed_antigens", set())
     supported_antigens = getattr(app.state, "supported_antigens", set())
+    unsupported_observed_antigens = getattr(app.state, "unsupported_observed_antigens", [])
     return {
         "hla_columns": getattr(app.state, "hla_columns", []),
         "observed_antigens": sorted(observed_antigens),
@@ -228,6 +294,11 @@ def reference_data():
         "modes": sorted(VALID_MODES),
         "validation_rule": "Validated against data/hla_validation.csv only",
         "calculation_scope": "HLA_ONLY",
+        "data_quality": {
+            "normalized_hla_value_count": getattr(app.state, "normalized_hla_value_count", 0),
+            "unsupported_observed_antigen_count": len(unsupported_observed_antigens),
+            "unsupported_observed_antigens": unsupported_observed_antigens,
+        },
     }
 
 
